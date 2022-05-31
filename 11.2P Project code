@@ -1,0 +1,61 @@
+// This #include statement was automatically added by the Particle IDE.
+#include <Adafruit_DHT.h>
+
+// Defines DHT at pin 7 on the particle argon
+#define DHTPIN 7
+
+//DHT 11 is the sensor we will be using to gather the temperature data
+#define DHTTYPE DHT11 
+
+DHT dht(DHTPIN,DHTTYPE);
+// Checks the millis
+int check = 0;
+//Cycles through every 50000 milliseconds
+int cycle = 50000;
+//Temperature starts at 0
+int temperature = 0;
+//Update starts at 0, this will upload the data to the particle console and also thingspeak. 
+int update = 0;
+// LED will be on D3
+int led1 = D3;
+
+
+void setup()
+{
+    //Sets up the LED to output and also the particle variable to temperature, and update
+  Serial.begin(9600);
+  pinMode(led1, OUTPUT);
+  Particle.variable("Temperature",update);
+}
+
+void loop()
+{
+    float temperature; //The temperature is the float
+    
+    temperature = dht.getTempCelcius(); // Temperature is equal to the dht temperature in celcius
+    
+    // If statement for the LED to flash, if temperatrure is below 18 or above 26, the LED will flash
+    if (temperature < 18 || temperature > 26)
+    {
+        digitalWrite(led1,HIGH);
+        delay(1000);                 
+        digitalWrite(led1,LOW);
+        delay(1000); 
+    }
+    
+    // Uploads and updates the temperature data to the particle console if the temperature is below 45 or above 0 degrees celcius. 
+    if (temperature < 45 && temperature > 0)
+    {
+        update = temperature;
+    }
+    
+       // Cycles through every 50000 milliseconds and updates the temperature data. 
+    if (millis() - check > cycle)
+    {
+        Particle.publish("Temperature",String(update), PRIVATE);
+        check = millis();
+    }
+    
+    Serial.println(update);
+    delay(100);
+}
